@@ -5,24 +5,32 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
 from urllib.parse import unquote
+from selenium.webdriver.common.keys import Keys
+from time import sleep
 import re
-import time
 import requests 
-
+import chromedriver_binary
 
 class BackupController:
-    def __init__(self,driver_location,org_link,login_url="https://login.salesforce.com/",is_headless=1,implicit_wait=30):
+    def __init__(self,org_link,login_url="https://login.salesforce.com/",is_headless=1,implicit_wait=30):
         self.login_url = login_url
         self.org_link=org_link
+        
         options = webdriver.ChromeOptions()
         if is_headless:
             options.add_argument("--headless")
-        self.driver = webdriver.Chrome(driver_location, options=options)
+        self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(implicit_wait)
     
-    def login(self,user_name,password):
-        login_url=f'{self.login_url}/?un={user_name}&pw={password}'
+    def login(self):
+        login_url = self.login_url
         self.driver.get(login_url)
+        username = self.driver.find_element(By.ID, 'username')
+        username.send_keys('ユーザ名')
+        password = self.driver.find_element(By.ID, 'password')
+        password.send_keys('パスワード')
+        password.send_keys(Keys.ENTER)
+        sleep(5)
     
     def detect_lightning(self,timeout):
         try:
@@ -34,6 +42,7 @@ class BackupController:
             return 0
     
     def extract_file_info(self,link):
+        print("ファイル解析開始：")
         if self.is_lightning:
             link=unquote(link)
             extract_link = re.search(r'srcUp\(\'(.*?)\'\)',link)
@@ -54,38 +63,29 @@ class BackupController:
                     #if chunk: 
                     f.write(chunk)
 
-    def download_backups(self,download_location,backup_url,cookies=None,user_name=None,password=None):
+    def download_backups(self,download_location,backup_url,cookies=None):
         
         if cookies is None:
-            if (user_name is not None and password is not None):
-                print('Logging in')
-                self.login(user_name,password)
-                print('Logged in')
-            else:
-                raise ValueError("Username and Password Argument is Missing")
+            print('Logging in')
+            self.login()
+            print('Logged in')
+        else:
+            raise ValueError("Username and Password Argument is Missing")
         print('Navigate to Backup URL')
         self.driver.get(backup_url)
-        time.sleep(5) ## wait 5 seconds
+        sleep(5) ## wait 5 seconds
         timeout=5 
         self.is_lightning=self.detect_lightning(timeout) ##check lightning experience
 
         soup=BeautifulSoup(self.driver.page_source, 'lxml') ##prepare the source
 
+        #BeautifulSoup4の設定修正テキストをダウンロードに指定する
         if cookies is None:
             cookies = {'oid': self.driver.get_cookie("oid")["value"], 'sid':self.driver.get_cookie("sid")["value"]}
-        print('Reading file links')
-        for link in soup.find_all('a', text='download'):
-            file_path,file_name = self.extract_file_info(link["href"])
+            print('Reading file links')
+        for link in soup.find_all('a', href=True, string='ダウンロード'):
+            file_path,file_name = self.extract_file_info(link.get('href'))
             file_url= self.org_link+file_path
             print('Downloading file '+file_url)
             self.download_file(file_url,cookies,file_name,download_location)
-
         self.driver.quit()
-
-        
-    
-    
-
-        
-
-            

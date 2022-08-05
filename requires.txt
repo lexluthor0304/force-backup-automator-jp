@@ -3,3 +3,4 @@ requests
 selenium
 beautifulsoup4
 urllib3
+chromedriver_binary-auto
