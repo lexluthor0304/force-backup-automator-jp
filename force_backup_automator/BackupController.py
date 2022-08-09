@@ -22,13 +22,15 @@ class BackupController:
         self.driver = webdriver.Chrome(options=options)
         self.driver.implicitly_wait(implicit_wait)
     
-    def login(self, user_name, password):
+    def login(self, user_name, pass_word):
         login_url = self.login_url
         self.driver.get(login_url)
         username = self.driver.find_element(By.ID, 'username')
+        #print("Username : " + user_name)
+        #print("Password : " + pass_word)
         username.send_keys(user_name)
         password = self.driver.find_element(By.ID, 'password')
-        password.send_keys(user_name)
+        password.send_keys(pass_word)
         password.send_keys(Keys.ENTER)
         sleep(5)
     
@@ -63,11 +65,11 @@ class BackupController:
                     #if chunk: 
                     f.write(chunk)
 
-    def download_backups(self,download_location,backup_url,cookies=None, user_name=None, password=None):
+    def download_backups(self,download_location,backup_url,cookies=None, user_name=str, pass_word=str):
         
         if cookies is None:
             print('Logging in')
-            self.login(user_name, password)
+            self.login(user_name, pass_word)
             print('Logged in')
         else:
             raise ValueError("Username and Password Argument is Missing")

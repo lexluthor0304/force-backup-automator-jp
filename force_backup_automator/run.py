@@ -7,7 +7,12 @@ def main():
     lightningのリンクは：ORG_URL/lightning/setup/DataManagementExport/home
     classicは：https://YOURDOMAIN.my.salesforce.com/ui/setup/export/DataExportPage/d?setupid=DataManagementExport
     '''
-    backup_instance.download_backups(download_location="ダウンロードパス", backup_url="メールに記載しているバックアップリンク", user_name="", password="")
+    backup_instance.download_backups(
+        download_location="格納パス", 
+        backup_url="エクスポート完了メールに記載しているリンク", 
+        user_name="ユーザ名", 
+        pass_word="パスワード",
+        cookies=None)
     print('----------------Script完了----------------')
 
 if __name__ == "__main__":
